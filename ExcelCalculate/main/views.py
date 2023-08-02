@@ -6,7 +6,11 @@ from sendEmail.views import *
 
 # Create your views here.
 def index(request):
-    return render(request, "main/index.html")
+    if 'user_name' in request.session.keys():
+        return render(request, "main/index.html") # calculate에 session 어떻게 넘어가는지 확인
+    else:
+        return redirect('main_signin')
+    # return render(request, "main/index.html")
 
 def signup(request):
     return render(request, "main/signup.html")
@@ -41,6 +45,18 @@ def join(request):
 def signin(request):
     return render(request, "main/signin.html")
 
+def login(request):
+    # 로그인 된 사용자만 이용할 수 있도록 구현
+    loginEmail = request.POST['loginEmail']
+    loginPW = request.POST['loginPW']
+    user = User.objects.get(user_email = loginEmail)
+    if user.user_password == loginPW:
+        request.session['user_name'] = user.user_name
+        request.session['user_email'] = user.user_email
+        return redirect('main_index')
+    else:
+        return redirect('main_loginFail')
+
 def verifyCode(request):
     return render(request, "main/verifyCode.html")
 
@@ -60,8 +76,9 @@ def verify(request):
 
         response.delete_cookie('code')
         response.delete_cookie('user_id')
-        response.set_cookie('user', user)
-
+        # response.set_cookie('user', user)
+        request.session['user_name'] = user.user_name
+        request.session['user_email'] = user.user_email
         return response
 
     else:
@@ -70,4 +87,13 @@ def verify(request):
     # return redirect('main_index')   # 인증이 완료되면 메인 화면으로 보내줌
 
 def result(request):
-    return render(request, "main/result.html")
+    if 'user_name' in request.session.keys():
+        return render(request, "main/result.html")
+    else:
+        return redirect('main_signin')
+
+def logout(request):
+    del request.session['user_name']
+    del request.session['user_email']
+
+    return redirect('main_signin')
