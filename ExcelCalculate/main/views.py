@@ -49,13 +49,21 @@ def login(request):
     # 로그인 된 사용자만 이용할 수 있도록 구현
     loginEmail = request.POST['loginEmail']
     loginPW = request.POST['loginPW']
-    user = User.objects.get(user_email = loginEmail)
+
+    try:
+        user = User.objects.get(user_email = loginEmail)
+    except:
+        return redirect('main_loginFail')
+    
     if user.user_password == loginPW:
         request.session['user_name'] = user.user_name
         request.session['user_email'] = user.user_email
         return redirect('main_index')
     else:
         return redirect('main_loginFail')
+
+def loginFail(request):
+    return render(request, 'main/loginFail.html')
 
 def verifyCode(request):
     return render(request, "main/verifyCode.html")
@@ -88,7 +96,26 @@ def verify(request):
 
 def result(request):
     if 'user_name' in request.session.keys():
-        return render(request, "main/result.html")
+        content = {}
+        content['grade_calculate_dic'] = request.session['grade_calculate_dic']
+        content['email_domain_dic'] = request.session['email_domain_dic']
+
+        del request.session['grade_calculate_dic']
+        del request.session['email_domain_dic']
+
+        content['grade_df'] = request.session['grade_df']
+        content['email_df'] = request.session['email.df']
+
+        del request.session['grade_df']
+        del request.session['email.df']
+    
+        # ------------------------------------------------------------------------
+
+        content['grade_calculate_pd_dic'] = request.session['grade_calculate_pd_dic']
+
+        del request.session['grade_calculate_pd_dic']
+        
+        return render(request, "main/result.html", content)
     else:
         return redirect('main_signin')
 
